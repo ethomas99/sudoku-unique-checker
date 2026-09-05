@@ -9,3 +9,4 @@ venv/
 .mypy_cache/
 .pytest_cache/
 .DS_Store
+.tmp_length_check.txt

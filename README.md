@@ -78,6 +78,16 @@ soon as it finds a second solution.
 
 Python 3.9 or newer. No third-party dependencies.
 
+## Running tests
+
+The test suite uses `pytest` (not needed to run the tool itself, only to
+develop it):
+
+```
+$ pip install pytest
+$ pytest
+```
+
 ## Status
 
 Early. The solver and CLI work for well-formed boards; error messages and
