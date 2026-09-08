@@ -15,7 +15,7 @@ empty cells), a path to a file containing one, or `-` to read from stdin.
 
 ```
 $ python -m sudoku_unique.cli \
-    "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8.."
+    "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8...7"
 unique solution:
 534678912
 672195348
@@ -50,7 +50,7 @@ Add `--json` to get the same result as a single JSON object on stdout,
 for scripting or feeding into another tool:
 
 ```
-$ python -m sudoku_unique.cli --json "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8.."
+$ python -m sudoku_unique.cli --json "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8...7"
 {"valid": true, "conflicts": [], "solution_count": 1, "unique": true, "solution": "534678912\n672195348\n198342567\n859761423\n426853791\n713924856\n961537284\n287419635\n345286179"}
 ```
 
