@@ -44,6 +44,37 @@ invalid board:
   - row 1 has duplicate 1 at columns 1 and 2
 ```
 
+## Multiple boards
+
+A file (or stdin) with several boards, one 81-character line each, is
+checked as a batch instead of a single puzzle:
+
+```
+$ cat boards.txt
+53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8...7
+1...........................................................................
+$ python -m sudoku_unique.cli boards.txt
+board 1:
+unique solution:
+534678912
+672195348
+198342567
+859761423
+426853791
+713924856
+961537284
+287419635
+345286179
+
+board 2:
+multiple solutions exist -- this board does not have a unique answer
+```
+
+With `--json`, the output is a JSON array of per-board result objects in
+the same order as the input. A single board, whether given as one line or
+wrapped across nine, still produces a single result object rather than a
+one-element array.
+
 ## JSON output
 
 Add `--json` to get the same result as a single JSON object on stdout,
