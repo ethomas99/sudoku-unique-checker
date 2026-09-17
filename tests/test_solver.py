@@ -7,6 +7,7 @@ from sudoku_unique.solver import (
     EMPTY,
     InvalidBoard,
     count_solutions,
+    estimate_difficulty,
     find_conflicts,
     format_board,
     parse_board,
@@ -142,3 +143,24 @@ def test_count_solutions_unsolvable_board_has_none():
 def test_format_board_uses_dot_for_empty():
     grid = parse_board(BLANK_BOARD)
     assert format_board(grid) == "\n".join(["." * 9] * 9)
+
+
+def test_estimate_difficulty_already_solved_is_easy():
+    grid = parse_board(SOLVED_BOARD)
+    assert estimate_difficulty(grid) == "easy"
+
+
+def test_estimate_difficulty_single_naked_single_is_easy():
+    # As in test_count_solutions_single_blank_cell_is_forced, the one blank
+    # cell's row, column, and box between them already contain the other
+    # eight digits, so naked-single elimination alone finishes the board.
+    grid = parse_board("." + SOLVED_BOARD[1:])
+    assert estimate_difficulty(grid) == "easy"
+
+
+def test_estimate_difficulty_blank_board_is_hard():
+    # With nothing placed, every cell has all nine candidates and no unit
+    # rules out any digit for any cell, so neither naked nor hidden
+    # singles make progress -- only search can finish it.
+    grid = parse_board(BLANK_BOARD)
+    assert estimate_difficulty(grid) == "hard"

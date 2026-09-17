@@ -75,6 +75,43 @@ the same order as the input. A single board, whether given as one line or
 wrapped across nine, still produces a single result object rather than a
 one-element array.
 
+## Difficulty estimate
+
+Add `--difficulty` to estimate how hard a board is to solve by hand. The
+estimate is based on which solving techniques are needed, not on how many
+clues are given:
+
+- `easy` -- naked-single elimination (a cell with only one legal digit
+  left) finishes the board on its own.
+- `medium` -- hidden-single elimination (a digit with only one legal cell
+  left in some row, column, or box) is needed somewhere along the way.
+- `hard` -- neither technique finishes the board; the rest can only be
+  pinned down by guessing and backtracking.
+
+Difficulty is only meaningful for a board with exactly one solution. For
+boards that are invalid or don't have a unique solution, `difficulty` is
+`null`/`None` rather than a guess.
+
+```
+$ python -m sudoku_unique.cli --difficulty \
+    ".34678912672195348198342567859761423426853791713924856961537284287419635345286179"
+unique solution:
+534678912
+672195348
+198342567
+859761423
+426853791
+713924856
+961537284
+287419635
+345286179
+difficulty: easy
+```
+
+Here a single cell is blank, and its row, column, and box between them
+already contain the other eight digits, so naked-single elimination alone
+finishes the board.
+
 ## JSON output
 
 Add `--json` to get the same result as a single JSON object on stdout,

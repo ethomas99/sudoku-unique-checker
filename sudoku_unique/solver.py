@@ -163,3 +163,96 @@ def count_solutions(grid: list[list[int]], limit: int = 2) -> list[list[list[int
 
 def format_board(grid: list[list[int]]) -> str:
     return "\n".join("".join(str(v) if v else "." for v in row) for row in grid)
+
+
+def _build_units() -> list[list[tuple[int, int]]]:
+    units = []
+    for row in range(BOARD_SIZE):
+        units.append([(row, col) for col in range(BOARD_SIZE)])
+    for col in range(BOARD_SIZE):
+        units.append([(row, col) for row in range(BOARD_SIZE)])
+    for box_row in range(0, BOARD_SIZE, BOX_SIZE):
+        for box_col in range(0, BOARD_SIZE, BOX_SIZE):
+            units.append(
+                [
+                    (r, c)
+                    for r in range(box_row, box_row + BOX_SIZE)
+                    for c in range(box_col, box_col + BOX_SIZE)
+                ]
+            )
+    return units
+
+
+_UNITS = _build_units()
+
+
+def _fill_naked_singles(grid: list[list[int]]) -> bool:
+    """Fill every empty cell that has exactly one legal candidate.
+
+    Returns whether anything was filled, so the caller can tell progress
+    from a dead end.
+    """
+    filled = False
+    for row in range(BOARD_SIZE):
+        for col in range(BOARD_SIZE):
+            if grid[row][col] != EMPTY:
+                continue
+            cands = _candidates(grid, row, col)
+            if len(cands) == 1:
+                grid[row][col] = cands[0]
+                filled = True
+    return filled
+
+
+def _fill_hidden_singles(grid: list[list[int]]) -> bool:
+    """Fill cells where a digit has exactly one legal spot left in a unit.
+
+    Unlike a naked single, the cell itself may still show several
+    candidates -- what makes it a "hidden" single is that every unit
+    (row, column, or box) it belongs to has only one empty cell that can
+    hold a particular digit.
+    """
+    filled = False
+    for unit in _UNITS:
+        digit_positions: dict[int, list[tuple[int, int]]] = {}
+        for row, col in unit:
+            if grid[row][col] != EMPTY:
+                continue
+            for digit in _candidates(grid, row, col):
+                digit_positions.setdefault(digit, []).append((row, col))
+        for digit, positions in digit_positions.items():
+            if len(positions) == 1:
+                row, col = positions[0]
+                if grid[row][col] == EMPTY:
+                    grid[row][col] = digit
+                    filled = True
+    return filled
+
+
+def estimate_difficulty(grid: list[list[int]]) -> str:
+    """Estimate how hard a board is to solve by hand.
+
+    Meaningful only for a board with exactly one solution -- callers
+    should check that first. The estimate works by repeatedly applying
+    naked-single and hidden-single elimination, the two techniques a human
+    solver reaches for before resorting to trial and error:
+
+    - "easy": naked singles alone finish the board.
+    - "medium": hidden singles are needed somewhere along the way.
+    - "hard": neither technique is enough to finish; the remaining cells
+      can only be pinned down by guessing and backtracking.
+    """
+    work = [row[:] for row in grid]
+    used_hidden = False
+
+    while True:
+        if _fill_naked_singles(work):
+            continue
+        if _fill_hidden_singles(work):
+            used_hidden = True
+            continue
+        break
+
+    if all(cell != EMPTY for row in work for cell in row):
+        return "medium" if used_hidden else "easy"
+    return "hard"

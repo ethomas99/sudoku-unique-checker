@@ -96,6 +96,40 @@ def test_main_reads_multiple_boards_from_file(tmp_path, capsys):
     assert out[1]["unique"] is False
 
 
+def test_build_result_without_difficulty_flag_omits_field():
+    result = build_result("." + SOLVED_BOARD[1:])
+    assert "difficulty" not in result
+
+
+def test_build_result_difficulty_reports_easy_for_forced_board():
+    result = build_result("." + SOLVED_BOARD[1:], with_difficulty=True)
+    assert result["difficulty"] == "easy"
+
+
+def test_build_result_difficulty_is_none_for_non_unique_board():
+    result = build_result("." * 81, with_difficulty=True)
+    assert result["difficulty"] is None
+
+
+def test_build_result_difficulty_is_none_for_invalid_board():
+    result = build_result("11" + "." * 79, with_difficulty=True)
+    assert result["difficulty"] is None
+
+
+def test_main_difficulty_flag_included_in_json_output(capsys):
+    exit_code = main(["--json", "--difficulty", "." + SOLVED_BOARD[1:]])
+    assert exit_code == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["difficulty"] == "easy"
+
+
+def test_main_difficulty_flag_printed_in_human_output(capsys):
+    exit_code = main(["--difficulty", "." + SOLVED_BOARD[1:]])
+    assert exit_code == 0
+    out = capsys.readouterr().out
+    assert "difficulty: easy" in out
+
+
 def test_main_multiple_boards_human_output_is_labeled(tmp_path, capsys):
     path = tmp_path / "boards.txt"
     path.write_text(f"{SOLVED_BOARD}\n11{'.' * 79}\n")

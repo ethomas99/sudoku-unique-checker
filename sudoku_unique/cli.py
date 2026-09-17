@@ -6,7 +6,14 @@ import argparse
 import json
 import sys
 
-from .solver import InvalidBoard, count_solutions, find_conflicts, format_board, parse_board
+from .solver import (
+    InvalidBoard,
+    count_solutions,
+    estimate_difficulty,
+    find_conflicts,
+    format_board,
+    parse_board,
+)
 
 
 def _read_board_text(source: str) -> str:
@@ -37,27 +44,36 @@ def split_boards(text: str) -> list[str]:
     return [text]
 
 
-def build_result(board_text: str) -> dict:
+def build_result(board_text: str, with_difficulty: bool = False) -> dict:
     grid = parse_board(board_text)
     conflicts = find_conflicts(grid)
     if conflicts:
-        return {
+        result = {
             "valid": False,
             "conflicts": conflicts,
             "solution_count": 0,
             "unique": False,
             "solution": None,
         }
+        if with_difficulty:
+            result["difficulty"] = None
+        return result
 
     solutions = count_solutions(grid, limit=2)
     count = len(solutions)
-    return {
+    result = {
         "valid": True,
         "conflicts": [],
         "solution_count": count,
         "unique": count == 1,
         "solution": format_board(solutions[0]) if count == 1 else None,
     }
+    if with_difficulty:
+        # Difficulty only means something when there's exactly one answer
+        # to reach -- a board with zero or many solutions isn't "hard",
+        # it's just not a real puzzle.
+        result["difficulty"] = estimate_difficulty(grid) if count == 1 else None
+    return result
 
 
 def _print_human(result: dict) -> None:
@@ -72,6 +88,8 @@ def _print_human(result: dict) -> None:
     elif result["unique"]:
         print("unique solution:")
         print(result["solution"])
+        if result.get("difficulty"):
+            print(f"difficulty: {result['difficulty']}")
     else:
         print("multiple solutions exist -- this board does not have a unique answer")
 
@@ -92,12 +110,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--json", action="store_true", help="emit machine-readable JSON instead of text"
     )
+    parser.add_argument(
+        "--difficulty",
+        action="store_true",
+        help=(
+            "estimate difficulty from the solving techniques required "
+            "(only meaningful for boards with a unique solution)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
         board_text = _read_board_text(args.board)
         boards = split_boards(board_text)
-        results = [build_result(board) for board in boards]
+        results = [build_result(board, with_difficulty=args.difficulty) for board in boards]
     except InvalidBoard as exc:
         if args.json:
             print(json.dumps({"valid": False, "error": str(exc)}))
