@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import sys
 
+from .generator import generate_puzzle
 from .solver import (
+    BOARD_SIZE,
     InvalidBoard,
     count_solutions,
     estimate_difficulty,
@@ -101,10 +104,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "board",
+        nargs="?",
         help=(
             "81-cell board (digits 1-9, '.' or '0' for empty), a path to a file "
             "containing one board or several (one 81-cell line each), or '-' to "
-            "read from stdin"
+            "read from stdin. Not used with --generate"
         ),
     )
     parser.add_argument(
@@ -118,7 +122,43 @@ def main(argv: list[str] | None = None) -> int:
             "(only meaningful for boards with a unique solution)"
         ),
     )
+    parser.add_argument(
+        "--generate",
+        action="store_true",
+        help="generate a random puzzle with a unique solution instead of checking one",
+    )
+    parser.add_argument(
+        "--clues",
+        type=int,
+        default=None,
+        help=(
+            "target number of filled cells when generating with --generate "
+            "(fewer clues takes longer to dig and isn't guaranteed exactly)"
+        ),
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="random seed for --generate, for reproducible output",
+    )
     args = parser.parse_args(argv)
+
+    if args.generate:
+        if args.board is not None:
+            parser.error("a board argument can't be combined with --generate")
+        if args.clues is not None and not (0 <= args.clues <= BOARD_SIZE * BOARD_SIZE):
+            parser.error("--clues must be between 0 and 81")
+        grid = generate_puzzle(clues=args.clues, rng=random.Random(args.seed))
+        board_text = format_board(grid)
+        if args.json:
+            print(json.dumps({"board": board_text.replace("\n", "")}))
+        else:
+            print(board_text)
+        return 0
+
+    if args.board is None:
+        parser.error("board is required unless --generate is given")
 
     try:
         board_text = _read_board_text(args.board)

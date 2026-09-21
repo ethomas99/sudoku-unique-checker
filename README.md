@@ -112,6 +112,27 @@ Here a single cell is blank, and its row, column, and box between them
 already contain the other eight digits, so naked-single elimination alone
 finishes the board.
 
+## Generating puzzles
+
+`--generate` produces a random puzzle with a unique solution instead of
+checking one you already have. It fills a random complete grid, then
+removes cells one at a time, keeping each removal only if the board still
+has exactly one solution without it. The output is a nine-line grid, the
+same shape `--json` reports a solution in, but with `.` for the cells
+left blank:
+
+```
+$ python -m sudoku_unique.cli --generate --seed 1
+```
+
+By default it digs until no more cells can be removed (a "minimal"
+puzzle). `--clues N` stops digging once `N` filled cells remain instead --
+it's a floor, not an exact count, since digging still stops early if the
+puzzle goes minimal first. `--seed N` makes the output reproducible. A
+board argument can't be combined with `--generate`; `--json` works the
+same as it does for checking a board, wrapping the generated board string
+in `{"board": "..."}`.
+
 ## JSON output
 
 Add `--json` to get the same result as a single JSON object on stdout,

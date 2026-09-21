@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from sudoku_unique.cli import build_result, main, split_boards
 
 SOLVED_BOARD = (
@@ -128,6 +130,53 @@ def test_main_difficulty_flag_printed_in_human_output(capsys):
     assert exit_code == 0
     out = capsys.readouterr().out
     assert "difficulty: easy" in out
+
+
+def test_main_generate_prints_a_unique_board(capsys):
+    exit_code = main(["--generate", "--seed", "42"])
+    assert exit_code == 0
+    out = capsys.readouterr().out.strip()
+    lines = out.splitlines()
+    assert len(lines) == 9
+    assert all(len(line) == 9 for line in lines)
+
+    result = build_result(out)
+    assert result["valid"] is True
+    assert result["unique"] is True
+
+
+def test_main_generate_json_mode(capsys):
+    exit_code = main(["--generate", "--seed", "42", "--json"])
+    assert exit_code == 0
+    out = json.loads(capsys.readouterr().out)
+    assert len(out["board"]) == 81
+
+
+def test_main_generate_same_seed_is_deterministic(capsys):
+    main(["--generate", "--seed", "7"])
+    first = capsys.readouterr().out
+    main(["--generate", "--seed", "7"])
+    second = capsys.readouterr().out
+    assert first == second
+
+
+def test_main_generate_rejects_board_argument(capsys):
+    with pytest.raises(SystemExit) as excinfo:
+        main(["--generate", "." * 81])
+    assert excinfo.value.code == 2
+
+
+def test_main_generate_respects_clues_target(capsys):
+    exit_code = main(["--generate", "--seed", "1", "--clues", "40", "--json"])
+    assert exit_code == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["board"].count(".") <= 41
+
+
+def test_main_requires_board_without_generate(capsys):
+    with pytest.raises(SystemExit) as excinfo:
+        main([])
+    assert excinfo.value.code == 2
 
 
 def test_main_multiple_boards_human_output_is_labeled(tmp_path, capsys):
